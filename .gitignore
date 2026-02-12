@@ -1,0 +1,27 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Capacitor / Android
+android/
+capacitor.config.ts.old
+local.properties
+.gradle/
+build/
+*.apk
+*.aar
+
+# Backups and Zips
+*.zip
+*.rar
+*.7z
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# API Keys
+API Key.txt
+.env

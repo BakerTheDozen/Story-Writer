@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story Writer | AI-Powered Prose Studio</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <span class="logo-icon">✒️</span>
+                <h1>Story Writer</h1>
+                <input type="text" id="project-name" placeholder="Name your project..." class="inline-input">
+            </div>
+            <div class="api-status">
+                <div class="action-group" style="margin-right: 1.5rem;">
+                    <button id="library-btn" class="secondary-btn">📚 Library</button>
+                    <button id="save-project-btn" class="primary-btn">💾 Save</button>
+                </div>
+                <div class="status-indicator" id="api-status-dot"></div>
+                <span id="api-status-text">API Key Required</span>
+                <button id="settings-btn" class="icon-btn">⚙️</button>
+            </div>
+        </header>
+
+        <main class="app-main">
+            <section class="sidebar">
+                <div class="card character-manager">
+                    <h2>Chapter Ledger</h2>
+                    <div id="chapter-ledger" class="item-list">
+                        <!-- Previous chapters will be listed here -->
+                        <p class="empty-msg">No chapters archived yet.</p>
+                    </div>
+                </div>
+
+                <div class="card session-actions">
+                    <button id="export-csv-btn" class="secondary-btn">Download Full Project (CSV)</button>
+                    <button id="export-json-btn" class="secondary-btn" style="margin-top: 0.5rem;">Backup Project
+                        (JSON)</button>
+                    <button id="import-json-btn" class="secondary-btn" style="margin-top: 0.5rem;">Restore from
+                        JSON</button>
+                    <input type="file" id="import-json-input" hidden accept=".json">
+                </div>
+            </section>
+
+            <section class="workspace">
+                <div class="card chapter-details">
+                    <h2>Chapter Details</h2>
+                    <form id="chapter-form">
+                        <div class="form-group">
+                            <label for="chapter-title">Chapter Title</label>
+                            <input type="text" id="chapter-title" placeholder="e.g. Chapter 1: The Awakening">
+                        </div>
+                        <div class="form-group">
+                            <label for="chapter-goal">Chapter Goal</label>
+                            <textarea id="chapter-goal" placeholder="What happens in this chapter?"></textarea>
+                        </div>
+                        <div class="form-group-row">
+                            <div class="form-group">
+                                <label for="chapter-setting">Setting</label>
+                                <input type="text" id="chapter-setting" placeholder="Location/Time">
+                            </div>
+                            <div class="form-group">
+                                <label for="chapter-tone">Tone</label>
+                                <input type="text" id="chapter-tone" placeholder="e.g. Tense">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card sidebar-inner">
+                    <h2>Characters</h2>
+                    <div id="character-list" class="item-list">
+                        <!-- Characters will be injected here -->
+                    </div>
+                    <button id="add-character-btn" class="secondary-btn">+ Character</button>
+                </div>
+
+                <div class="card output-area">
+                    <div class="output-header">
+                        <h2>Generated Prose</h2>
+                        <div class="action-group">
+                            <button id="download-prose-btn" class="secondary-btn icon-only"
+                                title="Download Text">📥</button>
+                            <button id="new-chapter-btn" class="secondary-btn">New Chapter</button>
+                            <button id="generate-chapter-btn" class="cta-btn">Generate</button>
+                        </div>
+                    </div>
+                    <div id="prose-output" class="prose-viewport">
+                        <p class="placeholder-text">Your generated story will appear here...</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Modals -->
+        <div id="settings-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3>Settings</h3>
+                <div class="form-group">
+                    <label for="api-key">Google AI API Key</label>
+                    <input type="password" id="api-key" placeholder="Enter your API key">
+                </div>
+                <div class="modal-actions">
+                    <button id="save-settings-btn" class="primary-btn">Save</button>
+                    <button id="close-settings-btn" class="secondary-btn">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="character-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3>Character Details</h3>
+                <div class="form-group">
+                    <label for="char-name">Name</label>
+                    <input type="text" id="char-name">
+                </div>
+                <div class="form-group">
+                    <label for="char-role">Role/Description</label>
+                    <textarea id="char-role" placeholder="Personality, appearance, or current motivations"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button id="save-character-btn" class="primary-btn">Save Character</button>
+                    <button id="close-character-btn" class="secondary-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="library-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 600px;">
+            <h3>Project Library</h3>
+            <div id="project-list" class="item-list" style="max-height: 300px; overflow-y: auto;">
+                <!-- Projects will be listed here -->
+            </div>
+            <div class="modal-actions">
+                <button id="create-new-project-btn" class="primary-btn">Create New Project</button>
+                <button id="close-library-btn" class="secondary-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="archive-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Archive Chapter</h3>
+            <p>Provide a brief summary of this chapter for AI continuity:</p>
+            <div class="form-group" style="margin-top: 1rem;">
+                <textarea id="archive-summary"
+                    placeholder="e.g. Protagonist finds the map but loses their guide."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button id="confirm-archive-btn" class="primary-btn">Archive & New Chapter</button>
+                <button id="cancel-archive-btn" class="secondary-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
