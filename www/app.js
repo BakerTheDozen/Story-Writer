@@ -10,7 +10,9 @@ const {
     loadProjectFromLibrary,
     deleteProjectFromLibrary,
     exportToJSON,
-    importFromJSON
+    importFromJSON,
+    listProjectFilesFromDrive,
+    downloadFileFromDrive
 } = window.StoryWriterStorage;
 const { generateProse } = window.StoryWriterAI;
 
@@ -65,7 +67,8 @@ const elements = {
     newChapterBtn: document.getElementById('new-chapter-btn'),
     downloadProseBtn: document.getElementById('download-prose-btn'),
     confirmArchiveBtn: document.getElementById('confirm-archive-btn'),
-    cancelArchiveBtn: document.getElementById('cancel-archive-btn')
+    cancelArchiveBtn: document.getElementById('cancel-archive-btn'),
+    connectGDriveBtn: document.getElementById('connect-gdrive-btn')
 };
 
 // Initialization
@@ -274,8 +277,49 @@ const setupEventListeners = () => {
     };
 
     // JSON Backups
-    elements.exportJsonBtn.onclick = () => exportToJSON(state);
-    elements.importJsonBtn.onclick = () => elements.importJsonInput.click();
+    elements.exportJsonBtn.onclick = async () => await exportToJSON(state);
+    elements.importJsonBtn.onclick = async () => {
+        if (window.StoryWriterGDrive && window.StoryWriterGDrive._accessToken) {
+            // Drive Restore Flow
+            try {
+                const files = await listProjectFilesFromDrive();
+                if (files.length === 0) {
+                    alert("No project backups found in Google Drive (Story Writer/Project folder).");
+                    return;
+                }
+
+                const fileList = files.map((f, i) => `${i + 1}. ${f.name} (${new Date(f.modifiedTime).toLocaleDateString()})`).join('\n');
+                const choice = prompt(`Select a project backup to restore (Enter number 1-${files.length}):\n\n${fileList}`);
+
+                if (choice && !isNaN(choice)) {
+                    const index = parseInt(choice) - 1;
+                    if (files[index]) {
+                        const importedState = await downloadFileFromDrive(files[index].id);
+                        state = importedState;
+                        await saveProjectToLibrary(state);
+                        init();
+                        alert("Project restored from Google Drive and saved to library!");
+                    }
+                }
+            } catch (err) {
+                alert("Error restoring from Drive: " + err.message);
+            }
+        } else {
+            // Local File Restore Flow
+            elements.importJsonInput.click();
+        }
+    };
+
+    elements.connectGDriveBtn.onclick = async () => {
+        const success = await window.StoryWriterGDrive.init();
+        if (success) {
+            alert("Connected to Google Drive successfully!");
+            elements.connectGDriveBtn.innerText = "✅ Google Drive Connected";
+            elements.connectGDriveBtn.disabled = true;
+        } else {
+            alert("Failed to connect to Google Drive. Check console for details.");
+        }
+    };
     elements.importJsonInput.onchange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -292,15 +336,15 @@ const setupEventListeners = () => {
     };
 
     // Exports
-    elements.exportCsvBtn.onclick = () => exportToCSV(state);
+    elements.exportCsvBtn.onclick = async () => await exportToCSV(state);
 
-    elements.downloadProseBtn.onclick = () => {
+    elements.downloadProseBtn.onclick = async () => {
         if (!state.currentChapter.prose) {
             alert("No prose to download yet!");
             return;
         }
         const filename = `${elements.projectName.value || 'story'}_${elements.chapterTitle.value || 'chapter'}.txt`;
-        downloadText(filename, state.currentChapter.prose);
+        await downloadText(filename, state.currentChapter.prose);
     };
 
     elements.newChapterBtn.onclick = () => {

@@ -237,7 +237,19 @@ window.StoryWriterStorage = {
     },
 
     // JSON Backup/Restore
-    exportToJSON: (data) => {
+    exportToJSON: async (data) => {
+        if (window.StoryWriterGDrive && window.StoryWriterGDrive._accessToken) {
+            try {
+                const folderId = await window.StoryWriterGDrive.getProjectFolderId();
+                const filename = `${data.projectName.replace(/\s+/g, '_') || 'story_writer_project'}.json`;
+                await window.StoryWriterGDrive.saveFile(filename, JSON.stringify(data, null, 2), 'application/json', folderId);
+                alert("Project backed up to Google Drive (Project folder)!");
+            } catch (err) {
+                alert("Failed to save to Google Drive: " + err.message);
+            }
+            return;
+        }
+
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -270,10 +282,23 @@ window.StoryWriterStorage = {
         });
     },
 
+    listProjectFilesFromDrive: async () => {
+        if (window.StoryWriterGDrive && window.StoryWriterGDrive._accessToken) {
+            return await window.StoryWriterGDrive.listProjectFiles();
+        }
+        return [];
+    },
+
+    downloadFileFromDrive: async (fileId) => {
+        if (window.StoryWriterGDrive && window.StoryWriterGDrive._accessToken) {
+            return await window.StoryWriterGDrive.getFileContent(fileId);
+        }
+        throw new Error("Google Drive not connected.");
+    },
+
     // Exports
-    exportToCSV: (data) => {
-        let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "Type,Title/Name,Goal/Role,Tone/Description,Prose/Summary\n";
+    exportToCSV: async (data) => {
+        let csvContent = "Type,Title/Name,Goal/Role,Tone/Description,Prose/Summary\n";
         csvContent += `Project,"${data.projectName.replace(/"/g, '""')}",,, \n`;
 
         data.characters.forEach(char => {
@@ -284,7 +309,19 @@ window.StoryWriterStorage = {
             csvContent += `Archived Chapter,"${ch.title.replace(/"/g, '""')}","${ch.goal.replace(/"/g, '""')}","${ch.summary.replace(/"/g, '""')}","${ch.prose.substring(0, 100).replace(/"/g, '""')}..."\n`;
         });
 
-        const encodedUri = encodeURI(csvContent);
+        if (window.StoryWriterGDrive && window.StoryWriterGDrive._accessToken) {
+            try {
+                const folderId = await window.StoryWriterGDrive.getProjectFolderId();
+                const filename = `${data.projectName || 'story'}_full_export.csv`;
+                await window.StoryWriterGDrive.saveFile(filename, csvContent, 'text/csv', folderId);
+                alert("Project export saved to Google Drive (Project folder)!");
+            } catch (err) {
+                alert("Failed to save to Google Drive: " + err.message);
+            }
+            return;
+        }
+
+        const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
         link.setAttribute("download", `${data.projectName || 'story'}_full_export.csv`);
@@ -293,7 +330,18 @@ window.StoryWriterStorage = {
         document.body.removeChild(link);
     },
 
-    downloadText: (filename, text) => {
+    downloadText: async (filename, text) => {
+        if (window.StoryWriterGDrive && window.StoryWriterGDrive._accessToken) {
+            try {
+                const folderId = await window.StoryWriterGDrive.getRootFolderId();
+                await window.StoryWriterGDrive.saveFile(filename, text, 'text/plain', folderId);
+                alert("Chapter saved to Google Drive (Story Writer folder)!");
+            } catch (err) {
+                alert("Failed to save to Google Drive: " + err.message);
+            }
+            return;
+        }
+
         const element = document.createElement('a');
         element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
         element.setAttribute('download', filename);
