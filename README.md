@@ -14,6 +14,7 @@ Story Writer is a powerful, AI-driven application designed to help writers plan,
 *   **Local-First Storage**: Securely save your projects using IndexedDB for persistence across browser restarts.
 *   **Import/Export**: Flexible backup options with support for JSON and CSV formats.
 *   **Mobile Ready**: Optimized for mobile deployment using Capacitor.
+*   **Version History**: Detailed tracking of updates in the [Changelog](CHANGELOG.md).
 
 ## Tech Stack
 
